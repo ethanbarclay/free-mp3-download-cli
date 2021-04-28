@@ -10,9 +10,9 @@ parser = argparse.ArgumentParser()
 # Adding arguments
 parser.add_argument("-s", "--Search", help = "Search query")
 parser.add_argument("-o", "--Output", help = "Download location")
-parser.add_argument("-a", action="store_true", help = "Search for album")
-parser.add_argument("-t", action="store_true", help = "Search for track")
-parser.add_argument("-f", action="store_true", help = "Download lossless .flac")
+parser.add_argument("-a", "--Album", action="store_true", help = "Search for album")
+parser.add_argument("-t", "--Track", action="store_true", help = "Search for track")
+parser.add_argument("-l", "--Lossless", action="store_true", help = "Download lossless .flac (default is mp3)")
 
 # Read arguments from command line
 args = parser.parse_args()
@@ -21,7 +21,7 @@ if args.f:
     fileType = "flac"
 else:
     fileType = "mp3"
-    
+
 key = "3yr22yg1hgr4pnm57yzb04"
 cookie = "d50jg47j8lq1engmm7ba3s1cg0"
 
