@@ -10,11 +10,13 @@ script for downloading full albums and tracks as mp3 or flac from http://free-mp
 # options
 
 ```
-  -h, --help            show this help message and exit
+  -h, --help            Show help message and exit
   -s SEARCH, --Search SEARCH
                         Search query
   -o OUTPUT, --Output OUTPUT
                         Download location
+  -c CAPTCHA, --Captcha CAPTCHA
+                        2Captcha Key
   -a                    Search for album
   -t                    Search for track
   -l                    Download lossless .flac (default is mp3)
