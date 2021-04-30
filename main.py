@@ -1,3 +1,4 @@
+from twocaptcha import TwoCaptcha
 import music_tag
 import argparse
 import requests
@@ -10,6 +11,7 @@ parser = argparse.ArgumentParser()
 # add arguments
 parser.add_argument("-s", "--Search", help="Search query")
 parser.add_argument("-o", "--Output", help="Download location")
+parser.add_argument("-c", "--Captcha", help="2Captcha Key")
 parser.add_argument("-a", action="store_true", help="Search for album")
 parser.add_argument("-t", action="store_true", help="Search for track")
 parser.add_argument(
@@ -25,8 +27,39 @@ if args.l:
 else:
     fileType = "mp3"
 
-key = "3yr22yg1hgr4pnm57yzb04"
+key = "k7xoeo5zc5osjouuaee4"
 cookie = "d50jg47j8lq1engmm7ba3s1cg0"
+
+solver = TwoCaptcha(args.Captcha)
+
+
+def validateKey(captcha):
+    print("captcha solved")
+    # download request params
+    albumDownloadParams = {"i": 713829, "ch": key, "f": fileType, "h": captcha}
+    headers_dict = {
+        "Host": "free-mp3-download.net",
+        "Connection": "keep-alive",
+        "sec-ch-ua": '"Chromium";v="91", " Not;A Brand";v="99"',
+        "sec-ch-ua-mobile": "?0",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4467.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Dest": "iframe",
+        "Referer": "https://free-mp3-download.net/download.php?id=713829",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cookie": "PHPSESSID=" + cookie + "; alertADSfree=yes",
+    }
+
+    # download request
+    albumDownload = requests.get(
+        "https://free-mp3-download.net/dl.php",
+        albumDownloadParams,
+        headers=headers_dict,
+    )
 
 
 def downloadTrack(trackId, albumId):
@@ -144,6 +177,14 @@ def track():
     data = searchReq.json()
     downloadTrack(data["data"][0]["id"], data["data"][0]["album"]["id"])
 
+
+# send captcha to validate key
+validateKey(
+    solver.recaptcha(
+        sitekey="6LfzIW4UAAAAAM_JBVmQuuOAw4QEA1MfXVZuiO2A",
+        url="http://free-mp3-download.net/",
+    )
+)
 
 # handle download type arg
 if args.a:
