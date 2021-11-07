@@ -2,7 +2,6 @@ from twocaptcha import TwoCaptcha
 import music_tag
 import argparse
 import requests
-import json
 import os
 
 # initalize parser
@@ -29,95 +28,71 @@ else:
 
 key = "k7xoeo5zc5osjouuaee4"
 cookie = "6c541eg0fv112k8p0em17of3i4"
-captcha = ""
 
 solver = TwoCaptcha(args.Captcha)
 
+# request headers
 headers_dict = {
-        "Host": "free-mp3-download.net",
-        "Connection": "keep-alive",
-        "sec-ch-ua": '"Chromium";v="91", " Not;A Brand";v="99"',
-        "sec-ch-ua-mobile": "?0",
-        "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4467.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Dest": "iframe",
-        "Referer": "https://free-mp3-download.net/download.php?id=713829",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Cookie": "PHPSESSID=" + cookie + "; alertADSfree=yes",
+    "Host": "free-mp3-download.net",
+    "Connection": "keep-alive",
+    "sec-ch-ua": '"Chromium";v="91", " Not;A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4467.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Dest": "iframe",
+    "Referer": "https://free-mp3-download.net/download.php?id=572554232&q=dGVzdCUyMGRyaXZl",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cookie": "PHPSESSID=" + cookie + "; alertADSfree=yes",
 }
 
-def validateKey(captcha):
-    # download request params
-    reqParams = {"i": 572554232, "ch": key, "f": fileType, "h": captcha}
-
-    # download request
-    req = requests.get(
-        "https://free-mp3-download.net/dl.php",
-        reqParams,
-        headers=headers_dict,
-    )
 
 def downloadTrack(trackId, albumId):
-    # find albumId by requesting track info
-    if albumId is None:
-        trackReq = requests.get("https://api.deezer.com/track/" + str(trackId))
-        track = albumReq.json()
-        albumId = track["album"]["id"]
-
     # get album metadata from deezer
     albumReq = requests.get("https://api.deezer.com/album/" + str(albumId))
     album = albumReq.json()
-
     # find index of track in album
     for track in album["tracks"]["data"]:
         if track["id"] == trackId:
             trackIndex = album["tracks"]["data"].index(track)
-
     # download request params
-    reqParams = {
+    downloadReqParams = {
         "i": album["tracks"]["data"][trackIndex]["id"],
         "ch": key,
         "f": fileType,
         "h": captcha,
     }
-
     # start download
-    req = requests.get(
+    downloadReq = requests.get(
         "https://free-mp3-download.net/dl.php",
-        reqParams,
+        downloadReqParams,
         headers=headers_dict,
     )
     artistName = album["artist"]["name"]
     albumName = album["title"]
     trackName = album["tracks"]["data"][trackIndex]["title"]
-
     # apply formatting for tags
     trackIndex += 1
     if trackIndex < 10:
         trackIndex = str(0) + str(trackIndex)
-
     # handle output folder arg
     if args.Output:
         folder = args.Output + "/" + artistName + " - " + albumName
     else:
         folder = artistName + " - " + albumName
-
     # create album folder
     if not os.path.exists(folder):
         os.makedirs(folder)
-
     # write data to file
     with open(
-        folder + "/" + str(trackIndex) + " - " + trackName + "." + fileType, "wb"
+        folder + "/" + str(trackIndex) + " - " +
+        trackName + "." + fileType, "wb"
     ) as f:
-        f.write(req.content)
-
+        f.write(downloadReq.content)
     print(str(trackIndex) + " - " + trackName + "." + fileType)
-
     # set track metadata
     localTrack = music_tag.load_file(
         folder + "/" + str(trackIndex) + " - " + trackName + "." + fileType
@@ -134,68 +109,89 @@ def downloadTrack(trackId, albumId):
         localTrack.append_tag("artwork", img_in.read())
     localTrack.save()
 
-def album():
-    searchReqParams = {"q": 'album:"' + args.Search + '"'}
-    searchReq = requests.get("https://api.deezer.com/search", searchReqParams)
 
-    # get deezer album id
-    data = searchReq.json()
-    albumId = data["data"][0]["album"]["id"]
-    print("Album Id: " + str(albumId))
-
-    # download cover art
-    coverArtReq = requests.get(data["data"][0]["album"]["cover_xl"], searchReqParams)
+def getArtwork(albumData):
+    coverArtReq = requests.get(
+        albumData["data"][0]["album"]["cover_xl"])
     with open("cover.jpg", "wb") as f:
         f.write(coverArtReq.content)
 
+
+def album():
+    # get deezer album data
+    searchReqParams = {"q": 'album:"' + args.Search + '"'}
+    searchReq = requests.get("https://api.deezer.com/search", searchReqParams)
+    data = searchReq.json()
+    albumId = data["data"][0]["album"]["id"]
+    print("album found: " + str(albumId))
+    getArtwork(data)
     albumReq = requests.get("https://api.deezer.com/album/" + str(albumId))
     data = albumReq.json()
-
+    # download tracks
     for track in data["tracks"]["data"]:
         downloadTrack(track["id"], data["id"])
+    # delete artwork file
+    os.remove("cover.jpg")
+
 
 def track():
+    # get deezer track data
     searchReq = requests.get("https://api.deezer.com/search?q=" + args.Search)
     data = searchReq.json()
+    getArtwork(data)
     downloadTrack(data["data"][0]["id"], data["data"][0]["album"]["id"])
+    # delete artwork file
+    os.remove("cover.jpg")
+
 
 def solveCaptcha():
     print("solving captcha")
     captcha = solver.recaptcha(
-                  sitekey="6LfzIW4UAAAAAM_JBVmQuuOAw4QEA1MfXVZuiO2A",
-                  url="http://free-mp3-download.net/",
-                  )
+        sitekey="6LfzIW4UAAAAAM_JBVmQuuOAw4QEA1MfXVZuiO2A",
+        url="http://free-mp3-download.net/",
+    )
     with open("captcha.json", "w") as storedCaptcha:
-        storedCaptcha.write(str(captcha))
-    captcha = captcha["code"]
+        captcha = str(captcha).replace("'", '"')
+        storedCaptcha.write(captcha)
+    captcha = captcha[1]
     print("captcha solved")
 
-# validate stored captcha
-if os.path.exists("captcha.json"):
-    storedCaptcha = open("captcha.json", "r")
-    captcha = storedCaptcha.read()
-    captcha = json.loads(captcha)["code"]
-    storedCaptcha.close()
-    # test stored captcha
-    print("testing stored captcha")
-    validateKey(captcha)
-    # download request params
-    reqParams = {"i": 572554232, "ch": key, "f": "mp3", "h": captcha}
 
+def validateKey(captcha):
+    # download request params
+    reqParams = {"i": 572554232, "ch": key, "f": fileType, "h": captcha}
     # download request
     req = requests.get(
         "https://free-mp3-download.net/dl.php",
         reqParams,
         headers=headers_dict,
-     )
-    if req.text == "Incorrect captcha":
+    )
+
+
+# validate stored captcha
+if os.path.exists("captcha.json"):
+    storedCaptcha = open("captcha.json", "r")
+    captcha = storedCaptcha.read()
+    captcha = captcha[1]
+    storedCaptcha.close()
+    # test stored captcha
+    print("testing stored captcha")
+    validateKey(captcha)
+    # download request params
+    downloadReqParams = {"i": 572554232, "ch": key, "f": "mp3", "h": captcha}
+    # download request
+    downloadReq = requests.get(
+        "https://free-mp3-download.net/dl.php",
+        downloadReqParams,
+        headers=headers_dict,
+    )
+    if downloadReq.text == "Incorrect captcha":
         solveCaptcha()
     else:
         print("stored captcha is valid")
-        
 else:
     solveCaptcha()
-        
+
 # handle download type arg
 if args.a:
     album()
