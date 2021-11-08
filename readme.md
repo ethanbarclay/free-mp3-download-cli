@@ -1,6 +1,12 @@
-# free-mp3-cli
+# free-mp3-download-cli
 
-script for downloading full albums and tracks as mp3 or flac from http://free-mp3-download.net/
+python script for downloading full albums and tracks as mp3 or flac from http://free-mp3-download.net/
+
+# features
+* downloads full albums
+* downloads individual tracks
+* grabs cover art and metadata
+* choose between mp3 or flac
 
 # how to use
 
