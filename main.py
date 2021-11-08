@@ -2,6 +2,7 @@ from twocaptcha import TwoCaptcha
 import music_tag
 import argparse
 import requests
+import json
 import os
 
 # initalize parser
@@ -30,6 +31,7 @@ key = "k7xoeo5zc5osjouuaee4"
 cookie = "6c541eg0fv112k8p0em17of3i4"
 
 solver = TwoCaptcha(args.Captcha)
+captcha = ""
 
 # request headers
 headers_dict = {
@@ -155,30 +157,33 @@ def solveCaptcha():
     with open("captcha.json", "w") as storedCaptcha:
         captcha = str(captcha).replace("'", '"')
         storedCaptcha.write(captcha)
-    captcha = captcha[1]
+    captcha = json.loads(captcha)["code"]
+    validateCaptcha()
     print("captcha solved")
 
 
-def validateKey(captcha):
+def validateCaptcha():
     # download request params
     reqParams = {"i": 572554232, "ch": key, "f": fileType, "h": captcha}
     # download request
-    req = requests.get(
+    downloadReq = requests.get(
         "https://free-mp3-download.net/dl.php",
         reqParams,
         headers=headers_dict,
     )
+    if downloadReq.text == "Incorrect captcha":
+        print("ERROR")
+        exit()
 
 
 # validate stored captcha
 if os.path.exists("captcha.json"):
     storedCaptcha = open("captcha.json", "r")
     captcha = storedCaptcha.read()
-    captcha = captcha[1]
+    captcha = json.loads(captcha)["code"]
     storedCaptcha.close()
     # test stored captcha
     print("testing stored captcha")
-    validateKey(captcha)
     # download request params
     downloadReqParams = {"i": 572554232, "ch": key, "f": "mp3", "h": captcha}
     # download request
