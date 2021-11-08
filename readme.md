@@ -6,7 +6,7 @@ python script for downloading full albums and tracks as mp3 or flac from http://
 * downloads full albums
 * downloads individual tracks
 * grabs cover art and metadata
-* choose between mp3 or flac
+* choose between mp3 or lossless (flac)
 
 # how to use
 
