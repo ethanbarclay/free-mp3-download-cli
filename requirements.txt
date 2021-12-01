@@ -1,3 +1,5 @@
 music-tag
 2captcha-python
 Pillow
+selenium
+selenium-wire

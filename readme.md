@@ -7,12 +7,14 @@ python script for downloading full albums and tracks as mp3 or flac from http://
 * downloads individual tracks
 * grabs cover art and metadata
 * choose between mp3 or lossless (flac)
-* uses 2captcha for captcha solving
+* uses selenium for manual captcha grabbing (firefox support soon)
+* optional 2captcha for captcha solving
 
 # how to use
 
 1. `pip install -r requirements.txt`
-2. `python main.py -a -s <search query> -o <output folder location> -c <2captcha user key>`
+2. Install [chromedriver](https://chromedriver.chromium.org/downloads) and set to PATH
+3. `python main.py -a -s <search query> -o <output folder location>`
 
 # options
 
