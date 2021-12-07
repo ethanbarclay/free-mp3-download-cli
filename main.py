@@ -210,13 +210,13 @@ def prompt_captcha():
                         captcha = decode(request.response.body, request.response.headers.get(
                             'Content-Encoding', 'identity'))
                         captcha = json.loads(captcha[5:].decode('utf-8'))[1]
-                        print(len(captcha))
                         if len(captcha) > 600:
                             continue
                         print("grabbed captcha")
                         with open("captcha.json", "w") as stored_captcha:
                             stored_captcha.write(
                                 '{"captchaId": "", "code": "' + captcha + '"}')
+                        print("stored new captcha")
                         return captcha
         except:
             continue
@@ -224,7 +224,7 @@ def prompt_captcha():
 
 def handle_captcha():
     if args.Captcha == None:
-        return (prompt_captcha())
+        return prompt_captcha()
     else:
         return (solve_captcha())
 
