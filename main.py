@@ -37,22 +37,8 @@ global_captcha = ""
 
 # request headers
 headers_dict = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Connection": "keep-alive",
     "Cookie": "PHPSESSID=" + cookie + "; alertADSfree=yes; metaFLAC=yes; maybeErr=yes",
-    "Host": "free-mp3-download.net",
     "Referer": "https://free-mp3-download.net/download.php?id=572554232&q=dGVzdCUyMGRyaXZl",
-    "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"macOS"',
-    "Sec-Fetch-Dest": "iframe",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
 
@@ -77,6 +63,9 @@ def download_track(trackId, album_id):
         download_req_params,
         headers=headers_dict,
     )
+    if download_req.text == "Incorrect captcha":
+        print("unknown captcha error")
+        exit()
     artist_name = album["artist"]["name"]
     album_name = album["title"]
     track_name = album["tracks"]["data"][track_index]["title"]
@@ -125,10 +114,13 @@ def get_artwork(album_data):
 
 def album():
     # get deezer album data
-    search_req_params = {"q": 'album:"' + args.Search + '"'}
+    search_req_params = {"q": args.Search}
     search_req = requests.get(
         "https://api.deezer.com/search", search_req_params)
     data = search_req.json()
+    if len(data["data"]) == 0:
+        print("album not found")
+        exit()
     album_id = data["data"][0]["album"]["id"]
     print("album found: " + str(album_id))
     get_artwork(data)
@@ -157,12 +149,13 @@ def solve_captcha():
         sitekey="6LfzIW4UAAAAAM_JBVmQuuOAw4QEA1MfXVZuiO2A",
         url="http://free-mp3-download.net/",
     )
+    print("captcha solved")
     with open("captcha.json", "w") as stored_captcha:
         captcha = str(captcha).replace("'", '"')
         stored_captcha.write(captcha)
+    print("stored new captcha")
     captcha = json.loads(captcha)["code"]
     validate_captcha()
-    print("captcha solved")
     return captcha
 
 
@@ -177,7 +170,7 @@ def validate_captcha():
         headers=headers_dict,
     )
     if download_req.text == "Incorrect captcha":
-        print("ERROR")
+        print("unknown captcha error")
         exit()
 
 
@@ -210,6 +203,7 @@ def prompt_captcha():
                         captcha = decode(request.response.body, request.response.headers.get(
                             'Content-Encoding', 'identity'))
                         captcha = json.loads(captcha[5:].decode('utf-8'))[1]
+                        # detect incorrect request
                         if len(captcha) > 600:
                             continue
                         print("grabbed captcha")
@@ -226,7 +220,7 @@ def handle_captcha():
     if args.Captcha == None:
         return prompt_captcha()
     else:
-        return (solve_captcha())
+        return solve_captcha()
 
 
 def check_stored_captcha():
@@ -260,5 +254,5 @@ check_stored_captcha()
 # handle download type arg
 if args.a:
     album()
-if args.t:
+elif args.t:
     track()
